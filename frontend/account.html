@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - Paper Recommender</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+
+    <nav class="bg-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex-shrink-0">
+                    <a href="index.html" class="text-2xl font-bold text-blue-600">🔬 Recommender</a>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <a href="index.html" class="text-gray-500 hover:bg-gray-200 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">Dashboard</a>
+                        <a href="search.html" class="text-gray-500 hover:bg-gray-200 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">Search</a>
+                        <a href="saved.html" class="logged-in text-gray-500 hover:bg-gray-200 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium" style="display: none;">Saved</a>
+                        <a href="history.html" class="logged-in text-gray-500 hover:bg-gray-200 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium" style="display: none;">History</a>
+                        <a href="account.html" class="logged-in bg-blue-600 text-white px-3 py-2 rounded-md text-sm font-medium" style="display: none;">Profile</a>
+                        <button class="logged-in text-gray-500 hover:bg-gray-200 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium" onclick="logout()" style="display: none;">Logout</button>
+                        <a href="login.html" class="guest bg-blue-600 text-white px-3 py-2 rounded-md text-sm font-medium" style="display: none;">Login / Register</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <div class="px-4 py-6 sm:px-0">
+            <h1 class="text-3xl font-bold text-gray-900 mb-6">Your Profile</h1>
+            
+            <div class="bg-white shadow-md rounded-lg p-8 mb-8">
+                <div id="profile-details-container"></div>
+            </div>
+
+            <div id="change-password-section">
+                <h2 class="text-2xl font-bold text-gray-900 mb-4">Change Password</h2>
+                <div class="bg-white shadow-md rounded-lg p-6">
+                    <form id="change-password-form">
+                        <div class="mb-3">
+                            <label for="old-password" class="block text-gray-700 font-bold mb-1 text-sm">Old Password</label>
+                            <input type="password" id="old-password" class="w-full px-3 py-2 border border-gray-300 rounded-lg" required>
+                        </div>
+                        <div class="mb-4">
+                            <label for="new-password" class="block text-gray-700 font-bold mb-1 text-sm">New Password</label>
+                            <input type="password" id="new-password" class="w-full px-3 py-2 border border-gray-300 rounded-lg" required>
+                        </div>
+                        <button type="submit" class="w-full bg-blue-600 text-white font-bold px-4 py-2 rounded-lg hover:bg-blue-700">
+                            Update Password
+                        </button>
+                        <div id="password-message" class="text-center mt-3"></div>
+                    </form>
+                </div>
+            </div>
+
+            <h2 class="text-2xl font-bold text-gray-900 mt-8 mb-4">Login History</h2>
+            <div class="bg-white shadow-md rounded-lg p-8">
+                <div id="login-history-container"></div>
+                <div id="login-history-pagination" class="mt-6 flex justify-between items-center" style="display: none;">
+                    <button id="login-history-prev" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50">
+                        &larr; Previous
+                    </button>
+                    <span id="login-history-page-info" class="text-gray-700 font-semibold"></span>
+                    <button id="login-history-next" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50">
+                        Next &rarr;
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/app.js"></script>
+    <script>
+        if (!localStorage.getItem('authToken')) window.location.href = 'login.html';
+        document.addEventListener('DOMContentLoaded', checkAuthState);
+
+        let loginHistoryCurrentPage = 0;
+        let loginHistoryTotalPages = 1;
+
+        async function fetchProfile() {
+            const container = document.getElementById('profile-details-container');
+            container.innerHTML = '<p>Loading profile...</p>';
+            try {
+                const response = await fetch('http://127.0.0.1:8080/api/user/profile', {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
+                });
+                if (!response.ok) throw new Error('Could not fetch profile.');
+                const profile = await response.json();
+                
+                if (profile.oauth2User === true) {
+                    document.getElementById('change-password-section').style.display = 'none';
+                }
+
+                container.innerHTML = `
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <h3 class="text-sm font-medium text-gray-500">Username</h3>
+                            <p class="text-xl font-semibold text-gray-800">${profile.username}</p>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-medium text-gray-500">Email</h3>
+                            <p class="text-xl font-semibold text-gray-800">${profile.email}</p>
+                        </div>
+                    </div>`;
+            } catch (error) {
+                container.innerHTML = `<p class="text-red-500">Failed to fetch profile data.</p>`;
+            }
+        }
+
+        async function fetchLoginHistory(page) {
+            const container = document.getElementById('login-history-container');
+            container.innerHTML = '<p class="text-gray-500">Loading login history...</p>';
+            document.getElementById('login-history-pagination').style.display = 'none';
+            try {
+                const response = await fetch(`http://127.0.0.1:8080/api/user/login-history?page=${page}&size=10`, {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
+                });
+                if (!response.ok) throw new Error('Could not fetch login history.');
+                
+                const data = await response.json();
+                const historyItems = data.content;
+                loginHistoryCurrentPage = data.number;
+                loginHistoryTotalPages = data.totalPages;
+                container.innerHTML = '';
+
+                if (historyItems.length === 0) {
+                    container.innerHTML = '<p class="text-gray-500">No login history found.</p>';
+                } else {
+                    const list = document.createElement('ul');
+                    list.className = 'divide-y divide-gray-200';
+                    historyItems.forEach(item => {
+                        const listItem = document.createElement('li');
+                        listItem.className = 'py-3 text-gray-700';
+                        listItem.textContent = `Logged in at: ${new Date(item.loginTime).toLocaleString()}`;
+                        list.appendChild(listItem);
+                    });
+                    container.appendChild(list);
+                    updateLoginHistoryPagination();
+                }
+            } catch (error) {
+                container.innerHTML = `<p class="text-red-500">${error.message}</p>`;
+            }
+        }
+
+        function updateLoginHistoryPagination() {
+            if (loginHistoryTotalPages <= 1) {
+                document.getElementById('login-history-pagination').style.display = 'none';
+                return;
+            }
+            document.getElementById('login-history-pagination').style.display = 'flex';
+            document.getElementById('login-history-page-info').textContent = `Page ${loginHistoryCurrentPage + 1} of ${loginHistoryTotalPages}`;
+            document.getElementById('login-history-prev').disabled = loginHistoryCurrentPage === 0;
+            document.getElementById('login-history-next').disabled = loginHistoryCurrentPage + 1 >= loginHistoryTotalPages;
+        }
+        
+        document.getElementById('login-history-prev').addEventListener('click', () => {
+            if (loginHistoryCurrentPage > 0) fetchLoginHistory(loginHistoryCurrentPage - 1);
+        });
+        document.getElementById('login-history-next').addEventListener('click', () => {
+            if (loginHistoryCurrentPage + 1 < loginHistoryTotalPages) fetchLoginHistory(loginHistoryCurrentPage + 1);
+        });
+
+        document.getElementById('change-password-form').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const oldPassword = document.getElementById('old-password').value;
+            const newPassword = document.getElementById('new-password').value;
+            const messageDiv = document.getElementById('password-message');
+            messageDiv.textContent = '';
+            try {
+                const response = await fetch('http://127.0.0.1:8080/api/user/change-password', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                    },
+                    body: JSON.stringify({ oldPassword, newPassword })
+                });
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error || 'Failed to change password.');
+                messageDiv.textContent = data.message;
+                messageDiv.className = 'text-green-500 text-center mt-4';
+                document.getElementById('change-password-form').reset();
+            } catch (error) {
+                messageDiv.textContent = error.message;
+                messageDiv.className = 'text-red-500 text-center mt-4';
+            }
+        });
+        
+        window.onload = () => {
+            fetchProfile();
+            fetchLoginHistory(loginHistoryCurrentPage);
+        };
+    </script>
+</body>
+</html>

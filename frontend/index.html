@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Paper Recommender</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+
+    <nav class="bg-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex-shrink-0">
+                    <a href="index.html" class="text-2xl font-bold text-blue-600">🔬 Recommender</a>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <a href="index.html" class="bg-blue-600 text-white px-3 py-2 rounded-md text-sm font-medium">Dashboard</a>
+                        <a href="search.html" class="text-gray-500 hover:bg-gray-200 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">Search</a>
+                        <a href="saved.html" class="logged-in text-gray-500 hover:bg-gray-200 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium" style="display: none;">Saved</a>
+                        <a href="history.html" class="logged-in text-gray-500 hover:bg-gray-200 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium" style="display: none;">History</a>
+                        <a href="account.html" class="logged-in text-gray-500 hover:bg-gray-200 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium" style="display: none;">Profile</a>
+                        <button class="logged-in text-gray-500 hover:bg-gray-200 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium" onclick="logout()" style="display: none;">Logout</button>
+                        <a href="login.html" class="guest bg-blue-600 text-white px-3 py-2 rounded-md text-sm font-medium" style="display: none;">Login / Register</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <div class="px-4 py-6 sm:px-0">
+            <h1 id="dashboard-title" class="text-3xl font-bold text-gray-900 mb-6"></h1>
+            <div id="recommendations-container" class="space-y-4"></div>
+        </div>
+    </main>
+
+    <script src="js/app.js"></script>
+    <script>
+        let savedPaperIds = new Set();
+
+        window.addEventListener('load', async () => {
+            checkAuthState();
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token');
+            if (token) {
+                localStorage.setItem('authToken', token);
+                window.history.replaceState({}, document.title, window.location.pathname);
+                checkAuthState();
+            }
+            
+            if (localStorage.getItem('authToken')) {
+                document.getElementById('dashboard-title').textContent = 'Papers Recommended For You';
+                await fetchInitialSavedPapers();
+                fetchRecommendations();
+            } else {
+                document.getElementById('dashboard-title').textContent = 'Popular Papers';
+                fetchPopularPapers();
+            }
+        });
+
+        async function fetchInitialSavedPapers() {
+            try {
+                const response = await fetch('http://127.0.0.1:8080/api/bookmarks', {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
+                });
+                if (!response.ok) return;
+                const savedPapers = await response.json();
+                savedPaperIds = new Set(savedPapers.map(p => p.paperId));
+            } catch (error) {
+                console.error("Could not fetch initial saved papers:", error);
+            }
+        }
+        
+        async function fetchPopularPapers() {
+            const container = document.getElementById('recommendations-container');
+            container.innerHTML = '<p class="text-center text-gray-500">Loading popular papers...</p>';
+            try {
+                const response = await fetch('http://127.0.0.1:8080/api/papers/popular');
+                if (!response.ok) throw new Error('Could not fetch papers.');
+                
+                const papers = await response.json();
+                container.innerHTML = '';
+                papers.forEach(paper => {
+                    container.innerHTML += getPaperCardHTML(paper);
+                });
+                checkAuthState(); 
+            } catch (error) {
+                container.innerHTML = `<p class="text-red-500 text-center">${error.message}</p>`;
+            }
+        }
+
+        async function fetchRecommendations() {
+            const container = document.getElementById('recommendations-container');
+            container.innerHTML = '<p class="text-center text-gray-500">Loading recommendations...</p>';
+            try {
+                const response = await fetch('http://127.0.0.1:8080/api/recommendations/personalized', {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
+                });
+                if (!response.ok) throw new Error('Could not fetch recommendations.');
+                
+                const papers = await response.json();
+                container.innerHTML = '';
+                if (papers.length === 0) {
+                     container.innerHTML = '<p class="text-center text-gray-500">No recommendations yet. View some papers to build your history!</p>';
+                     return;
+                }
+                papers.forEach(paper => {
+                    container.innerHTML += getPaperCardHTML(paper);
+                });
+                checkAuthState();
+            } catch (error) {
+                container.innerHTML = `<p class="text-red-500 text-center">${error.message}</p>`;
+            }
+        }
+
+        function getPaperCardHTML(paper) {
+            const titleOnly = paper.text_content.split('  ')[0];
+            const abstractOnly = paper.text_content.substring(titleOnly.length).trim();
+            const isSaved = savedPaperIds.has(paper.id);
+            const buttonText = isSaved ? 'Saved' : 'Save';
+            const buttonClass = isSaved ? 'bg-green-600' : 'bg-blue-600';
+            return `
+                <div class="bg-white border border-gray-200 p-6 rounded-lg shadow-sm">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <a href="https://arxiv.org/abs/${paper.id}" target="_blank" onclick="recordView('${paper.id}')" class="block font-bold text-xl text-gray-900 mb-2 hover:text-blue-600">${titleOnly}</a>
+                            <p class="text-gray-600 text-sm mb-3"><span class="font-semibold">arXiv ID:</span> ${paper.id}</p>
+                        </div>
+                        <button onclick="toggleSave('${paper.id}', this)" class="logged-in ml-4 px-4 py-2 text-white font-semibold rounded-lg ${buttonClass}" style="display: none;">
+                            ${buttonText}
+                        </button>
+                    </div>
+                    <p class="text-gray-700 mt-2">${abstractOnly.substring(0, 250)}...</p>
+                </div>`;
+        }
+
+        async function toggleSave(paperId, buttonElement) {
+            const isCurrentlySaved = savedPaperIds.has(paperId);
+            const method = isCurrentlySaved ? 'DELETE' : 'POST';
+            const url = `http://127.0.0.1:8080/api/bookmarks/${paperId}`;
+            try {
+                const response = await fetch(url, {
+                    method: method,
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
+                });
+                if (!response.ok) throw new Error('Operation failed.');
+                if (isCurrentlySaved) {
+                    savedPaperIds.delete(paperId);
+                    buttonElement.textContent = 'Save';
+                    buttonElement.classList.remove('bg-green-600');
+                    buttonElement.classList.add('bg-blue-600');
+                } else {
+                    savedPaperIds.add(paperId);
+                    buttonElement.textContent = 'Saved';
+                    buttonElement.classList.remove('bg-blue-600');
+                    buttonElement.classList.add('bg-green-600');
+                }
+            } catch (error) {
+                alert("Failed to update saved status. Please try again.");
+            }
+        }
+
+        function recordView(paperId) {
+            if (!localStorage.getItem('authToken')) return;
+            fetch('http://127.0.0.1:8080/api/history/record', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                },
+                body: JSON.stringify({ paperId: paperId })
+            });
+        }
+    </script>
+</body>
+</html>
