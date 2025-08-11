@@ -1,24 +1,28 @@
 package com.recommender.paper_recommender.service;
 
 import com.recommender.paper_recommender.dto.PaperDto;
+import com.recommender.paper_recommender.dto.PaperPageDto;
 import com.recommender.paper_recommender.dto.PersonalizedRequest;
 import com.recommender.paper_recommender.model.ViewingHistory;
 import com.recommender.paper_recommender.repository.ViewingHistoryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
-import com.recommender.paper_recommender.dto.PaperPageDto;
 
 @Service
 public class RecommendationService {
 
     private final RestTemplate restTemplate = new RestTemplate();
-    private final String mlServiceUrl = "http://127.0.0.1:8000";
+
+    // Use @Value to inject the URL from the docker-compose environment variable
+    @Value("${ML_SERVICE_URL}")
+    private String mlServiceUrl;
 
     private final ViewingHistoryRepository viewingHistoryRepository;
 
@@ -27,6 +31,7 @@ public class RecommendationService {
         this.viewingHistoryRepository = viewingHistoryRepository;
     }
 
+    // Updated for pagination
     public PaperPageDto searchPapers(String query, int page, int size) {
         String url = mlServiceUrl + "/search/?query=" + query + "&page=" + page + "&size=" + size;
         return restTemplate.getForObject(url, PaperPageDto.class);
@@ -38,10 +43,8 @@ public class RecommendationService {
         return Arrays.asList(response);
     }
 
-
     @Transactional(readOnly = true)
     public List<PaperDto> getPersonalizedRecommendations(Long userId) {
-
         List<ViewingHistory> history = viewingHistoryRepository.findUserHistoryWithPapers(userId);
 
         if (history.isEmpty()) {
@@ -56,6 +59,6 @@ public class RecommendationService {
         PersonalizedRequest requestPayload = new PersonalizedRequest(paperIndices);
         PaperDto[] response = restTemplate.postForObject(url, requestPayload, PaperDto[].class);
 
-        return Arrays.asList(response);
+        return response != null ? Arrays.asList(response) : List.of();
     }
 }

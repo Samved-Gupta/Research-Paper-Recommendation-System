@@ -1,8 +1,8 @@
-CREATE DATABASE recommender_db;
+CREATE DATABASE IF NOT EXISTS recommender_db;
 
 USE recommender_db;
 
--- Create the `users` table (no changes)
+-- Create the `users` table
 CREATE TABLE users (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(255) NOT NULL UNIQUE,
@@ -10,29 +10,23 @@ CREATE TABLE users (
     password VARCHAR(255) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Create the `papers` table (UPDATED with paper_index)
+-- Create the `papers` table
 CREATE TABLE papers (
     paper_id VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci PRIMARY KEY,
     text_content TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-    paper_index INT NOT NULL, -- New column to store the original row index
-    INDEX (paper_index) -- Add an index for faster lookups
+    paper_index INT NOT NULL,
+    INDEX (paper_index)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-
-USE recommender_db;
-
--- Create the new table to store login history
+-- Create the table to store login history
 CREATE TABLE login_history (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     user_id BIGINT NOT NULL,
     login_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
     CONSTRAINT fk_login_history_user FOREIGN KEY (user_id) REFERENCES users(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-
-
--- Create the `viewing_history` table (no changes)
+-- Create the `viewing_history` table
 CREATE TABLE viewing_history (
     history_id BIGINT AUTO_INCREMENT PRIMARY KEY,
     user_id BIGINT NOT NULL,
@@ -44,17 +38,16 @@ CREATE TABLE viewing_history (
     CONSTRAINT fk_paper FOREIGN KEY (paper_id) REFERENCES papers(paper_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-
-CREATE TABLE IF NOT EXISTS password_reset_tokens (
+-- Create the `password_reset_tokens` table
+CREATE TABLE password_reset_tokens (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     token VARCHAR(255) NOT NULL UNIQUE,
     user_id BIGINT NOT NULL,
     expiry_date TIMESTAMP NOT NULL,
     CONSTRAINT fk_password_reset_token_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-) ENGINE=InnoDB
-  DEFAULT CHARSET=utf8mb4
-  COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Create the `saved_papers` table
 CREATE TABLE saved_papers (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     user_id BIGINT NOT NULL,
@@ -63,13 +56,4 @@ CREATE TABLE saved_papers (
     CONSTRAINT fk_saved_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     CONSTRAINT fk_saved_paper FOREIGN KEY (paper_id) REFERENCES papers(paper_id) ON DELETE CASCADE,
     UNIQUE KEY uk_user_paper (user_id, paper_id)
-);
-
-SELECT * FROM login_history;
-
-SELECT * FROM papers;
-
-SELECT * FROM users;
-SELECT * FROM saved_papers;
-SELECT * FROM password_reset_tokens;
-SELECT * FROM viewing_history;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
