@@ -1,0 +1,11 @@
+# Secrets file
+.env
+
+# Ignore large SQL dump files
+final_dump.sql
+
+# Ignore IDE and build folders
+.idea/
+.vscode/
+target/
+venv/

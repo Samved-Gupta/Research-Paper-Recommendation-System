@@ -15,10 +15,12 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.recommender.paper_recommender.model.PasswordResetToken; // <-- Add
-import com.recommender.paper_recommender.repository.PasswordResetTokenRepository; // <-- Add
-import java.util.Calendar; // <-- Add
-import java.util.UUID; // <-- Add
+import com.recommender.paper_recommender.model.PasswordResetToken;
+import com.recommender.paper_recommender.repository.PasswordResetTokenRepository;
+import org.springframework.transaction.annotation.Propagation; // <-- Import added
+
+import java.util.Calendar;
+import java.util.UUID;
 import java.util.List;
 import java.util.NoSuchElementException;
 import org.springframework.data.domain.Page;
@@ -39,26 +41,27 @@ public class UserService {
     @Autowired
     private JwtTokenProvider tokenProvider;
 
-    @Autowired // <-- Add this
+    @Autowired
     private PasswordResetTokenRepository passwordResetTokenRepository;
 
-    @Autowired // <-- Add this
+    @Autowired
     private EmailService emailService;
 
     public User registerNewUser(RegistrationRequest registrationRequest) {
-
-        // 1. Check if the username is already taken
         if (userRepository.findByUsername(registrationRequest.getUsername()).isPresent()) {
             throw new IllegalStateException("That username is already taken. Please choose another.");
         }
-        // 2. Check if the email is already in use
         if (userRepository.findByEmail(registrationRequest.getEmail()).isPresent()) {
             throw new IllegalStateException("An account with that email address already exists.");
         }
-
         String hashedPassword = passwordEncoder.encode(registrationRequest.getPassword());
         User newUser = new User(registrationRequest.getUsername(), registrationRequest.getEmail(), hashedPassword);
         return userRepository.save(newUser);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void recordLoginHistory(User user) {
+        loginHistoryRepository.save(new LoginHistory(user));
     }
 
     @Transactional
@@ -67,12 +70,14 @@ public class UserService {
                 .orElseThrow(() -> new IllegalStateException("The email or password you entered is incorrect. Please try again."));
 
         if (passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
-            loginHistoryRepository.save(new LoginHistory(user));
+            // This will now run in its own transaction and commit immediately
+            this.recordLoginHistory(user);
 
             Authentication auth = new UsernamePasswordAuthenticationToken(
                     new org.springframework.security.core.userdetails.User(user.getEmail(), user.getPassword(), List.of()),
                     null, List.of()
             );
+            // An error is still happening here, but it won't affect the login history anymore
             return tokenProvider.generateToken(auth);
         } else {
             throw new IllegalStateException("The email or password you entered is incorrect. Please try again.");
@@ -100,8 +105,9 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(user);
     }
+    
     public void createPasswordResetTokenForUser(String email) {
-        User user = findUserByEmail(email); // Re-uses your existing method
+        User user = findUserByEmail(email);
         String token = UUID.randomUUID().toString();
         PasswordResetToken myToken = new PasswordResetToken(token, user);
         passwordResetTokenRepository.save(myToken);
@@ -114,7 +120,6 @@ public class UserService {
             throw new IllegalStateException("Invalid token.");
         }
 
-        // Check for token expiration
         Calendar cal = Calendar.getInstance();
         if ((passToken.getExpiryDate().getTime() - cal.getTime().getTime()) <= 0) {
             throw new IllegalStateException("Token has expired.");
@@ -125,7 +130,6 @@ public class UserService {
         user.setPassword(hashedPassword);
         userRepository.save(user);
 
-        // Invalidate the token
         passwordResetTokenRepository.delete(passToken);
     }
 }
