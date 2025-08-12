@@ -21,6 +21,7 @@ services:
         fromService:
           type: web
           name: recommender-ml-service
+          property: url # <-- This line was missing
 
   # The HTML/CSS/JS Frontend Service
   - type: web
