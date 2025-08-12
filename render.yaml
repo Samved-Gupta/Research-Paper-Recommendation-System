@@ -18,10 +18,7 @@ services:
     envVars:
       - fromGroup: recommender-secrets
       - key: ML_SERVICE_URL
-        fromService:
-          type: web
-          name: recommender-ml-service
-          property: url # <-- This line was missing
+        value: http://recommender-ml-service:8000 # <-- This is the corrected line
 
   # The HTML/CSS/JS Frontend Service
   - type: web
