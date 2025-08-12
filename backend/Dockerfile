@@ -4,8 +4,14 @@ FROM maven:3.9.6-eclipse-temurin-21 AS build
 # Set the working directory inside the container
 WORKDIR /app
 
-# Copy the entire project into the container
-COPY . .
+# Copy only the pom.xml first to leverage Docker's cache layer for dependencies
+COPY backend/pom.xml .
+
+# Download all the dependencies
+RUN mvn dependency:go-offline
+
+# Copy the rest of your backend's source code
+COPY backend/src ./src
 
 # Run the Maven command to build the project's JAR file, skipping tests
 RUN mvn clean package -DskipTests
