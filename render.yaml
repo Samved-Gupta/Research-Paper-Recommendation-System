@@ -3,6 +3,7 @@ services:
   - type: web
     name: recommender-ml-service
     runtime: docker
+    plan: free # <-- Add this line
     repo: https://github.com/Samved-Gupta/Research-Paper-Recommendation-System
     dockerfilePath: ./python-ml-service/Dockerfile
     healthCheckPath: /docs
@@ -13,16 +14,18 @@ services:
   - type: web
     name: recommender-backend
     runtime: docker
+    plan: free # <-- Add this line
     repo: https://github.com/Samved-Gupta/Research-Paper-Recommendation-System
     dockerfilePath: ./backend/Dockerfile
     envVars:
       - fromGroup: recommender-secrets
       - key: ML_SERVICE_URL
-        value: http://recommender-ml-service:8000 # <-- This is the corrected line
+        value: http://recommender-ml-service:8000
 
   # The HTML/CSS/JS Frontend Service
   - type: web
     name: recommender-frontend
     runtime: docker
+    plan: free # <-- Add this line
     repo: https://github.com/Samved-Gupta/Research-Paper-Recommendation-System
     dockerfilePath: ./frontend/Dockerfile
