@@ -86,7 +86,7 @@
             const container = document.getElementById('profile-details-container');
             container.innerHTML = '<p>Loading profile...</p>';
             try {
-                const response = await fetch('http://127.0.0.1:8080/api/user/profile', {
+                const response = await fetch('https://recommender-ml-service.onrender.com/api/user/profile', {
                     headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
                 });
                 if (!response.ok) throw new Error('Could not fetch profile.');
@@ -117,7 +117,7 @@
             container.innerHTML = '<p class="text-gray-500">Loading login history...</p>';
             document.getElementById('login-history-pagination').style.display = 'none';
             try {
-                const response = await fetch(`http://127.0.0.1:8080/api/user/login-history?page=${page}&size=10`, {
+                const response = await fetch(`https://recommender-ml-service.onrender.com/api/user/login-history?page=${page}&size=10`, {
                     headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
                 });
                 if (!response.ok) throw new Error('Could not fetch login history.');
@@ -172,7 +172,7 @@
             const messageDiv = document.getElementById('password-message');
             messageDiv.textContent = '';
             try {
-                const response = await fetch('http://127.0.0.1:8080/api/user/change-password', {
+                const response = await fetch('https://recommender-ml-service.onrender.com/api/user/change-password', {
                     method: 'POST',
                     headers: { 
                         'Content-Type': 'application/json',

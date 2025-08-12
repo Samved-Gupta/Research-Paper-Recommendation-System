@@ -72,7 +72,7 @@
         successMessage.style.display = 'none';
 
         try {
-            const response = await fetch('http://127.0.0.1:8080/api/auth/register', {
+            const response = await fetch('https://recommender-ml-service.onrender.com/api/auth/register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, email, password })
@@ -100,7 +100,7 @@
     });
 
     function socialLogin(provider) {
-        window.location.href = `http://127.0.0.1:8080/oauth2/authorization/${provider}`;
+        window.location.href = `https://recommender-ml-service.onrender.com/oauth2/authorization/${provider}`;
     }
 </script>
 </body>
