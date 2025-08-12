@@ -1,8 +1,12 @@
-# 1. Use an official, lightweight Nginx base image
-FROM nginx:1.25-alpine-slim
+# Use a lightweight, official Nginx image
+FROM nginx:stable-alpine
 
-# 2. Copy all your HTML, CSS, and JS files into the default Nginx web root directory
-COPY . /usr/share/nginx/html
+# Copy your frontend code from the 'frontend' subfolder in your repository
+# into the directory that Nginx serves files from.
+COPY frontend/ /usr/share/nginx/html
 
-# 3. Expose port 80, which is the default HTTP port that Nginx listens on
+# Tell Docker that the container listens on port 80
 EXPOSE 80
+
+# The default command to start Nginx
+CMD ["nginx", "-g", "daemon off;"]
