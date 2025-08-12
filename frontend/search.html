@@ -74,7 +74,7 @@
         if (localStorage.getItem('authToken')) {
             (async function() {
                 try {
-                    const response = await fetch('https://recommender-ml-service.onrender.com/api/bookmarks', {
+                    const response = await fetch('https://recommender-backend-m6pc.onrender.com/api/bookmarks', {
                         headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
                     });
                     if (!response.ok) return;
@@ -89,7 +89,7 @@
         async function toggleSave(paperId, buttonElement) {
             const isCurrentlySaved = savedPaperIds.has(paperId);
             const method = isCurrentlySaved ? 'DELETE' : 'POST';
-            const url = `https://recommender-ml-service.onrender.com/api/bookmarks/${paperId}`;
+            const url = `https://recommender-backend-m6pc.onrender.com/api/bookmarks/${paperId}`;
             try {
                 const response = await fetch(url, {
                     method: method,
@@ -114,7 +114,7 @@
 
         function recordView(paperId) {
             if (!localStorage.getItem('authToken')) return;
-            fetch('https://recommender-ml-service.onrender.com/api/history/record', {
+            fetch('https://recommender-backend-m6pc.onrender.com/api/history/record', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -132,7 +132,7 @@
                 const headers = {};
                 const token = localStorage.getItem('authToken');
                 if (token) headers['Authorization'] = `Bearer ${token}`;
-                const response = await fetch(`https://recommender-ml-service.onrender.com/api/recommendations/recommend?paper_index=${paperIndex}`, { headers });
+                const response = await fetch(`https://recommender-backend-m6pc.onrender.com/api/recommendations/recommend?paper_index=${paperIndex}`, { headers });
                 if (!response.ok) throw new Error('Could not get recommendations.');
 
                 const papers = await response.json();
@@ -179,7 +179,7 @@
                 const headers = {};
                 const token = localStorage.getItem('authToken');
                 if (token) headers['Authorization'] = `Bearer ${token}`;
-                const response = await fetch(`https://recommender-ml-service.onrender.com/api/recommendations/search?query=${encodeURIComponent(currentQuery)}&page=${page}&size=10`, { headers });
+                const response = await fetch(`https://recommender-backend-m6pc.onrender.com/api/recommendations/search?query=${encodeURIComponent(currentQuery)}&page=${page}&size=10`, { headers });
                 if (!response.ok) throw new Error('Search failed.');
                 
                 const data = await response.json();
