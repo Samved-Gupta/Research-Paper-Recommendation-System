@@ -1,0 +1,30 @@
+services:
+  # The Python ML Service
+  - type: web
+    name: recommender-ml-service
+    runtime: docker
+    repo: https://github.com/Samved-Gupta/Research-Paper-Recommendation-System
+    dockerfilePath: ./python-ml-service/Dockerfile
+    healthCheckPath: /docs
+    envVars:
+      - fromGroup: recommender-secrets
+
+  # The Java Backend Service
+  - type: web
+    name: recommender-backend
+    runtime: docker
+    repo: https://github.com/Samved-Gupta/Research-Paper-Recommendation-System
+    dockerfilePath: ./backend/Dockerfile
+    envVars:
+      - fromGroup: recommender-secrets
+      - key: ML_SERVICE_URL
+        fromService:
+          type: web
+          name: recommender-ml-service
+
+  # The HTML/CSS/JS Frontend Service
+  - type: web
+    name: recommender-frontend
+    runtime: docker
+    repo: https://github.com/Samved-Gupta/Research-Paper-Recommendation-System
+    dockerfilePath: ./frontend/Dockerfile
