@@ -60,7 +60,7 @@
                 return;
             }
             try {
-                const response = await fetch(`http://127.0.0.1:8080/api/history/${historyId}`, {
+                const response = await fetch(`https://recommender-ml-service.onrender.com/api/history/${historyId}`, {
                     method: 'DELETE',
                     headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
                 });
@@ -76,7 +76,7 @@
             container.innerHTML = '<p class="text-center text-gray-500">Loading your history...</p>';
             document.getElementById('pagination-controls').style.display = 'none';
             try {
-                const response = await fetch(`http://127.0.0.1:8080/api/history/view?page=${page}&size=10`, {
+                const response = await fetch(`https://recommender-ml-service.onrender.com/api/history/view?page=${page}&size=10`, {
                     headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
                 });
                 if (!response.ok) throw new Error('Could not fetch your history.');
