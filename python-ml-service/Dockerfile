@@ -8,6 +8,13 @@ WORKDIR /app
 COPY requirements.txt .
 
 # 4. Install the Python dependencies
+# Install large libraries individually to conserve memory
+RUN pip install --no-cache-dir numpy
+RUN pip install --no-cache-dir pandas
+RUN pip install --no-cache-dir scipy
+RUN pip install --no-cache-dir scikit-learn
+
+# Now, install the rest of the packages from the requirements file
 RUN pip install --no-cache-dir -r requirements.txt
 
 # 5. Copy the rest of the application code, including the CSV data file
