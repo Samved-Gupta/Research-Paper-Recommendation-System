@@ -8,6 +8,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value; // <-- Import Value
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
@@ -30,50 +31,37 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
     @Autowired
     private LoginHistoryRepository loginHistoryRepository;
 
+    @Value("${app.oauth2.redirect-uri}") // <-- Inject the configured redirect URI
+    private String redirectUri;
+
     @Override
     @Transactional
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
 
         OAuth2User oauth2User = (OAuth2User) authentication.getPrincipal();
 
-        String login = oauth2User.getAttribute("login");
+        String name = oauth2User.getAttribute("name") != null ? oauth2User.getAttribute("name") : oauth2User.getAttribute("login");
+        String email = oauth2User.getAttribute("email") != null ? oauth2User.getAttribute("email") : oauth2User.getAttribute("login") + "@github.user.placeholder.com";
 
-        String name = oauth2User.getAttribute("name");
-        if (name == null) {
-            name = login;
-        }
-
-        String email = oauth2User.getAttribute("email");
-        if (email == null) {
-            email = login + "@github.user.placeholder.com";
-        }
-
-        // --- THE FIX for the 'effectively final' error ---
-        // Create final variables to be used inside the lambda expression.
         final String finalEmail = email;
         final String finalName = name;
 
-        // Use the final variables to find or create the user.
         User user = userRepository.findByEmail(finalEmail).orElseGet(() -> {
             String username = finalName;
             if (userRepository.findByUsername(finalName).isPresent()) {
-                int randomSuffix = new Random().nextInt(9000) + 1000;
-                username = finalName + randomSuffix;
+                username = finalName + (new Random().nextInt(9000) + 1000);
             }
-
             User newUser = new User();
             newUser.setEmail(finalEmail);
             newUser.setUsername(username);
-            newUser.setPassword("OAUTH2_USER");
+            newUser.setPassword("OAUTH2_USER"); // This is a placeholder, as password is not used for OAuth2
             return userRepository.save(newUser);
         });
-        // ----------------------------------------------------
 
         loginHistoryRepository.save(new LoginHistory(user));
 
         String token = tokenProvider.generateToken(authentication);
-        String targetUrl = "http://127.0.0.1:5500/index.html";
-        String redirectUrl = UriComponentsBuilder.fromUriString(targetUrl)
+        String redirectUrl = UriComponentsBuilder.fromUriString(redirectUri) // <-- Use the configured URI
                 .queryParam("token", token)
                 .build().toUriString();
 
