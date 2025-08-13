@@ -1,12 +1,11 @@
 services:
-  # The Python ML Service
-  - type: web
+  # The Python ML Service (changed to a Private Service)
+  - type: pserv # <-- Changed from 'web'
     name: recommender-ml-service
     runtime: docker
-    plan: free # <-- Add this line
+    plan: free
     repo: https://github.com/Samved-Gupta/Research-Paper-Recommendation-System
     dockerfilePath: ./python-ml-service/Dockerfile
-    healthCheckPath: /docs
     envVars:
       - fromGroup: recommender-secrets
 
@@ -14,7 +13,7 @@ services:
   - type: web
     name: recommender-backend
     runtime: docker
-    plan: free # <-- Add this line
+    plan: free
     repo: https://github.com/Samved-Gupta/Research-Paper-Recommendation-System
     dockerfilePath: ./backend/Dockerfile
     envVars:
@@ -26,6 +25,6 @@ services:
   - type: web
     name: recommender-frontend
     runtime: docker
-    plan: free # <-- Add this line
+    plan: free
     repo: https://github.com/Samved-Gupta/Research-Paper-Recommendation-System
     dockerfilePath: ./frontend/Dockerfile
