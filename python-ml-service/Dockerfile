@@ -4,18 +4,19 @@ FROM python:3.11-slim
 # 2. Set the working directory in the container
 WORKDIR /app
 
-# 3. Copy the requirements file *from the correct subfolder*
+# 3. Copy the requirements file
 COPY python-ml-service/requirements.txt .
 
-# 4. Install the Python dependencies (using the memory-saving technique)
-RUN pip install --no-cache-dir numpy
-RUN pip install --no-cache-dir pandas
-RUN pip install --no-cache-dir scipy
-RUN pip install --no-cache-dir scikit-learn
+# 4. Install the Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 5. Copy the ML service's source code *from the correct subfolder*
-COPY python-ml-service/ .
+# 5. Copy the pre-processed model and database files
+COPY python-ml-service/tfidf_vectorizer.joblib .
+COPY python-ml-service/tfidf_matrix.joblib .
+COPY python-ml-service/papers.db .
 
-# 6. Command to run the application
+# 6. Copy the application's source code
+COPY python-ml-service/main.py .
+
+# 7. Command to run the application
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
