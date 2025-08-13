@@ -20,8 +20,6 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.springframework.security.config.Customizer.withDefaults;
-
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
@@ -43,7 +41,8 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .cors(withDefaults()) // This will now use the bean below
+                // This line is slightly changed to be more explicit
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authz -> authz
@@ -60,7 +59,7 @@ public class SecurityConfig {
                 )
                 .oauth2Login(oauth2 -> oauth2
                         .loginPage("/login.html")
-                        .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
+                        .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2Services))
                         .successHandler(oAuth2LoginSuccessHandler)
                 );
 
@@ -69,11 +68,9 @@ public class SecurityConfig {
         return http.build();
     }
 
-    // This bean defines the CORS configuration for the entire application
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        // Add your live frontend URL and local URLs
         configuration.setAllowedOrigins(List.of(
             "https://recommender-frontend.onrender.com",
             "http://127.0.0.1:5500",
@@ -84,7 +81,7 @@ public class SecurityConfig {
         configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/api/**", configuration); // Apply CORS to all /api/ endpoints
+        source.registerCorsConfiguration("/api/**", configuration);
         return source;
     }
 }

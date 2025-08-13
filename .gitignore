@@ -1,11 +1,21 @@
 # Secrets file
 .env
 
-# Ignore large SQL dump files
+# Large data and dump files
 final_dump.sql
+papers_data.csv
 
-# Ignore IDE and build folders
+# Python cache
+__pycache__/
+
+# IDE and build folders
 .idea/
 .vscode/
 target/
 venv/
+
+# Log files
+*.log
+
+# OS-specific files
+.DS_Store
