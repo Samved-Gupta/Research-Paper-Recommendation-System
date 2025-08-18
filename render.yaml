@@ -1,6 +1,6 @@
 services:
-  # The Python ML Service (changed to a Private Service)
-  - type: pserv # <-- Changed from 'web'
+  # The Python ML Service (as a Private Service)
+  - type: pserv
     name: recommender-ml-service
     runtime: docker
     plan: free
