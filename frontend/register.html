@@ -72,7 +72,7 @@
         successMessage.style.display = 'none';
 
         try {
-            const response = await fetch('https://recommender-backend-m6pc.onrender.com/api/auth/register', {
+            const response = await fetch('https://recommender-backend-6ndq.onrender.com/api/auth/register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, email, password })
@@ -100,7 +100,7 @@
     });
 
     function socialLogin(provider) {
-        window.location.href = `https://recommender-backend-m6pc.onrender.com/oauth2/authorization/${provider}`;
+        window.location.href = `https://recommender-backend-6ndq.onrender.com/oauth2/authorization/${provider}`;
     }
 </script>
 </body>

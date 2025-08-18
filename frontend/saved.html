@@ -60,7 +60,7 @@
                 return;
             }
             try {
-                const response = await fetch(`https://recommender-backend-m6pc.onrender.com/api/bookmarks/${paperId}`, {
+                const response = await fetch(`https://recommender-backend-6ndq.onrender.com/api/bookmarks/${paperId}`, {
                     method: 'DELETE',
                     headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
                 });
@@ -76,7 +76,7 @@
             container.innerHTML = '<p class="text-center text-gray-500">Loading your saved papers...</p>';
             document.getElementById('pagination-controls').style.display = 'none';
             try {
-                const response = await fetch(`https://recommender-backend-m6pc.onrender.com/api/bookmarks?page=${page}&size=10`, {
+                const response = await fetch(`https://recommender-backend-6ndq.onrender.com/api/bookmarks?page=${page}&size=10`, {
                     headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
                 });
                 if (!response.ok) throw new Error('Could not fetch your saved papers.');

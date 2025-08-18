@@ -78,7 +78,7 @@
             const container = document.getElementById('recommendations-container');
             container.innerHTML = '<p class="text-center text-gray-500">Loading popular papers...</p>';
             try {
-                const response = await fetch('https://recommender-backend-m6pc.onrender.com/api/papers/popular');
+                const response = await fetch('https://recommender-backend-6ndq.onrender.com/api/papers/popular');
                 if (!response.ok) throw new Error('Could not fetch papers.');
                 
                 const papers = await response.json();
@@ -97,7 +97,7 @@
             container.innerHTML = '<p class="text-center text-gray-500">Loading recommendations...</p>';
             try {
                 // This now correctly calls your backend service
-                const response = await fetch('https://recommender-backend.onrender.com/api/recommendations/personalized', {
+                const response = await fetch('https://recommender-backend-6ndq.onrender.com/api/recommendations/personalized', {
                     headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
                 });
 
@@ -144,7 +144,7 @@
         async function toggleSave(paperId, buttonElement) {
             const isCurrentlySaved = savedPaperIds.has(paperId);
             const method = isCurrentlySaved ? 'DELETE' : 'POST';
-            const url = `https://recommender-backend-m6pc.onrender.com/api/bookmarks/${paperId}`;
+            const url = `https://recommender-backend-6ndq.onrender.com/api/bookmarks/${paperId}`;
             try {
                 const response = await fetch(url, {
                     method: method,
@@ -169,7 +169,7 @@
 
         function recordView(paperId) {
             if (!localStorage.getItem('authToken')) return;
-            fetch('https://recommender-backend-m6pc.onrender.com/api/history/record', {
+            fetch('https://recommender-backend-6ndq.onrender.com/api/history/record', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
