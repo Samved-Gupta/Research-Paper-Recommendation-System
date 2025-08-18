@@ -15,11 +15,10 @@ public class EmailService {
     @Value("${spring.mail.username}")
     private String fromEmail;
 
-    @Value("${app.frontend.base-url}") // <-- Inject the frontend URL
+    @Value("${app.frontend.base-url}")
     private String frontendBaseUrl;
 
     public void sendPasswordResetEmail(String to, String token) {
-        // Use the configured frontend URL to build the link
         String resetUrl = frontendBaseUrl + "/reset-password.html?token=" + token;
         String subject = "Reset Your Password - Paper Recommender";
         String body = "Hello,\n\nYou have requested to reset your password. Please click the link below to set a new one. This link will expire in 24 hours.\n\n" + resetUrl;

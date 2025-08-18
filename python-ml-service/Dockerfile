@@ -1,17 +1,22 @@
-# python-ml-service/Dockerfile (MODIFIED)
-
+# 1. Use an official Python runtime as a parent image
 FROM python:3.11-slim
 
+# 2. Set the working directory in the container
 WORKDIR /app
 
-# Copy and install requirements
-COPY requirements.txt .
+# 3. Copy the requirements file *from the correct subfolder*
+COPY python-ml-service/requirements.txt .
+
+# 4. Install the Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy only the necessary application files
-COPY tfidf_vectorizer.joblib .
-COPY main.py .
+# 5. Copy the pre-processed model and database files
+COPY python-ml-service/tfidf_vectorizer.joblib .
+COPY python-ml-service/tfidf_matrix.joblib .
+COPY python-ml-service/papers.db .
 
-# Expose the port and run the application
-EXPOSE 8000
+# 6. Copy the application's source code
+COPY python-ml-service/main.py .
+
+# 7. Command to run the application
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
