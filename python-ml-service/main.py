@@ -6,7 +6,12 @@ from pydantic import BaseModel
 from typing import List
 import math
 import sqlite3
+import os
 
+app = FastAPI(
+    docs_url=None if os.getenv("ENV") == "production" else "/docs",
+    redoc_url=None if os.getenv("ENV") == "production" else "/redoc"
+)
 app = FastAPI(title="Research Paper Recommender ML Service")
 
 app.add_middleware(
