@@ -1,11 +1,12 @@
 services:
-  # The Python ML Service (as a Private Service)
-  - type: pserv
+  # The Python ML Service (as a public Web Service)
+  - type: web # <-- Changed back to 'web'
     name: recommender-ml-service
     runtime: docker
     plan: free
     repo: https://github.com/Samved-Gupta/Research-Paper-Recommendation-System
     dockerfilePath: ./python-ml-service/Dockerfile
+    healthCheckPath: /docs
     envVars:
       - fromGroup: recommender-secrets
 
@@ -18,8 +19,7 @@ services:
     dockerfilePath: ./backend/Dockerfile
     envVars:
       - fromGroup: recommender-secrets
-      - key: ML_SERVICE_URL
-        value: http://recommender-ml-service:8000
+      # The ML_SERVICE_URL is now read from the secrets group
 
   # The HTML/CSS/JS Frontend Service
   - type: web
@@ -27,4 +27,4 @@ services:
     runtime: docker
     plan: free
     repo: https://github.com/Samved-Gupta/Research-Paper-Recommendation-System
-    dockerfilePath: ./frontend/Dockerfile
+    dockerfilePath: ./frontend/Dockerfile 
