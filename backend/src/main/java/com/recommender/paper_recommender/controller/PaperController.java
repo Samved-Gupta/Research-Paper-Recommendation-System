@@ -3,7 +3,6 @@ package com.recommender.paper_recommender.controller;
 import com.recommender.paper_recommender.dto.PaperDto;
 import com.recommender.paper_recommender.model.Paper;
 import com.recommender.paper_recommender.repository.PaperRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
@@ -18,20 +17,24 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/papers")
 public class PaperController {
 
-    @Autowired
-    private PaperRepository paperRepository;
+    private final PaperRepository paperRepository;
+
+    public PaperController(PaperRepository paperRepository) {
+        this.paperRepository = paperRepository;
+    }
 
     @GetMapping("/popular")
     public ResponseEntity<List<PaperDto>> getPopularPapers() {
-        // For now, "popular" will just be the first 10 papers in the database.
         Page<Paper> paperPage = paperRepository.findAll(PageRequest.of(0, 10));
-        List<PaperDto> paperDtos = paperPage.getContent().stream().map(paper -> {
-            PaperDto dto = new PaperDto();
-            dto.setId(paper.getPaperId());
-            dto.setIndex(paper.getPaperIndex());
-            dto.setText_content(paper.getTextContent());
-            return dto;
-        }).collect(Collectors.toList());
+        
+        List<PaperDto> paperDtos = paperPage.getContent().stream()
+            .map(paper -> new PaperDto(
+                    paper.getPaperId(),
+                    paper.getPaperIndex(),
+                    paper.getTextContent()
+            ))
+            .collect(Collectors.toList());
+
         return ResponseEntity.ok(paperDtos);
     }
 }
