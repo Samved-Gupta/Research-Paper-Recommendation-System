@@ -74,7 +74,7 @@
         if (localStorage.getItem('authToken')) {
             (async function() {
                 try {
-                    const response = await fetch('https://recommender-backend-6ndq.onrender.comapi/bookmarks', {
+                    const response = await fetch('https://recommender-backend-6ndq.onrender.com/api/bookmarks', {
                         headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
                     });
                     if (!response.ok) return;
@@ -180,7 +180,7 @@
                 const token = localStorage.getItem('authToken');
                 if (token) headers['Authorization'] = `Bearer ${token}`;
                 const response = await fetch(`https://recommender-backend-6ndq.onrender.com/api/recommendations/search?query=${encodeURIComponent(currentQuery)}&page=${page}&size=10`, { headers });
-                if (!response.ok) throw new Error('Search failed.');
+                if (!response.ok) throw new Error('Search failed. (By the function fetchSearchResult)');
                 
                 const data = await response.json();
                 const papers = data.content;

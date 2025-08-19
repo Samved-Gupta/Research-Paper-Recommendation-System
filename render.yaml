@@ -1,30 +1,74 @@
 services:
-  # The Python ML Service (as a public Web Service)
-  - type: web # <-- Changed back to 'web'
-    name: recommender-ml-service
-    runtime: docker
-    plan: free
-    repo: https://github.com/Samved-Gupta/Research-Paper-Recommendation-System
-    dockerfilePath: ./python-ml-service/Dockerfile
-    healthCheckPath: /docs
+  - type: pserv
+    name: recommender-db
     envVars:
-      - fromGroup: recommender-secrets
+      - fromGroup: recommender-secrets # Pulls DB credentials from the secret group
 
-  # The Java Backend Service
+  
+  - type: web
+    name: recommender-ml-service
+    plan: free # Note: Free services may sleep after inactivity
+    runtime: docker
+    repo: https://github.com/Samved-Gupta/Research-Paper-Recommendation-System
+    rootDir: ./python-ml-service # Specifies the directory for this service
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /docs # Health check for the FastAPI service
+
+  # -----------------------------------------------------------------
+  #  3. Java Backend Service (Handles logic, users, and DB)
+  # -----------------------------------------------------------------
   - type: web
     name: recommender-backend
-    runtime: docker
     plan: free
+    runtime: docker
     repo: https://github.com/Samved-Gupta/Research-Paper-Recommendation-System
-    dockerfilePath: ./backend/Dockerfile
+    rootDir: ./backend # Specifies the directory for this service
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /actuator/health # Standard health check for Spring Boot
     envVars:
-      - fromGroup: recommender-secrets
-      # The ML_SERVICE_URL is now read from the secrets group
+      # --- Database Connection ---
+      # Constructs the JDBC URL from the 'recommender-db' service variables
+      - key: SPRING_DATASOURCE_URL
+        value: jdbc:mysql://${recommender-db.RAILWAY_DB_HOST}:${recommender-db.RAILWAY_DB_PORT}/railway
+      - key: SPRING_DATASOURCE_USERNAME
+        fromService:
+          type: pserv
+          name: recommender-db
+          envVarKey: RAILWAY_DB_USER
+      - key: SPRING_DATASOURCE_PASSWORD
+        fromService:
+          type: pserv
+          name: recommender-db
+          envVarKey: RAILWAY_DB_PASSWORD
+          
+      # --- Service-to-Service Connection ---
+      # Gets the internal URL of the ML service for private communication
+      - key: ML_SERVICE_URL
+        fromService:
+          type: web
+          name: recommender-ml-service
+          property: url # 'url' provides the internal cluster URL
 
-  # The HTML/CSS/JS Frontend Service
+      # --- Security ---
+      # Generates a secure secret for JWT tokens on first deploy
+      - key: JWT_SECRET
+        generateValue: true
+
+  # -----------------------------------------------------------------
+  #  4. Frontend Service (Static web server for the UI)
+  # -----------------------------------------------------------------
   - type: web
     name: recommender-frontend
-    runtime: docker
     plan: free
+    runtime: docker
     repo: https://github.com/Samved-Gupta/Research-Paper-Recommendation-System
-    dockerfilePath: ./frontend/Dockerfile 
+    rootDir: ./frontend # Specifies the directory for this service
+    dockerfilePath: ./Dockerfile
+    envVars:
+      # --- Frontend-to-Backend Connection ---
+      # Gets the public URL of the backend service for the browser to call
+      - key: API_BASE_URL
+        fromService:
+          type: web
+          name: recommender-backend
+          property: externalUrl # 'externalUrl' provides the public URL
